@@ -1731,14 +1731,14 @@
                 this.angle = angle;
                 this.char = emoji;
                 this.speed = 2 + Math.random() * 3;
-                this.size = 30 + Math.random() * 20;
+                this.size = 25 + Math.random() * 15; // Smaller emojis (was 30-50, now 25-40)
                 this.rotation = 0;
                 this.rotationSpeed = (Math.random() - 0.5) * 0.05;
                 this.vx = Math.cos(angle) * this.speed;
                 this.vy = Math.sin(angle) * this.speed;
                 this.opacity = 1;
                 this.life = 1;
-                this.fadeSpeed = 0.008 + Math.random() * 0.004;
+                this.fadeSpeed = 0.012 + Math.random() * 0.006; // Fade faster (was 0.008-0.012, now 0.012-0.018)
             }
 
             update() {
@@ -1848,7 +1848,8 @@
             }
 
             generateSymbols() {
-                const numSymbols = this.side === 'left' || this.side === 'right' ? 50 : 100;
+                // Reduced symbol count for better performance
+                const numSymbols = this.side === 'left' || this.side === 'right' ? 30 : 60;
                 for (let i = 0; i < numSymbols; i++) {
                     this.symbols.push(cuneiform[Math.floor(Math.random() * cuneiform.length)]);
                 }
@@ -1860,7 +1861,8 @@
                 if (this.offset >= this.fontSize * 1.2) {
                     this.offset = 0;
                     this.symbols.push(cuneiform[Math.floor(Math.random() * cuneiform.length)]);
-                    if (this.symbols.length > (this.side === 'left' || this.side === 'right' ? 50 : 100)) {
+                    const maxSymbols = this.side === 'left' || this.side === 'right' ? 30 : 60;
+                    if (this.symbols.length > maxSymbols) {
                         this.symbols.shift();
                     }
                 }
@@ -1932,7 +1934,8 @@
 
         const game4HieroglyphPool = [];
         const game4ExplodingEmojis = [];
-        const MAX_GAME4_HIEROGLYPHS = 50;
+        const MAX_GAME4_HIEROGLYPHS = 30; // Reduced from 50 for better performance
+        const MAX_EXPLODING_EMOJIS = 200; // Cap total particles
 
         for (let i = 0; i < MAX_GAME4_HIEROGLYPHS; i++) {
             game4HieroglyphPool.push(new Game4Hieroglyph());
@@ -1997,10 +2000,19 @@
         }
 
         function createEmojiExplosion(x, y) {
-            const numEmojis = 12 + Math.floor(Math.random() * 8); // 12-20 emojis
+            // Don't create explosion if we're at the particle limit
+            if (game4ExplodingEmojis.length >= MAX_EXPLODING_EMOJIS) {
+                return;
+            }
+
+            const numEmojis = 8 + Math.floor(Math.random() * 4); // 8-12 emojis (reduced from 12-20)
             const angleStep = (Math.PI * 2) / numEmojis;
 
             for (let i = 0; i < numEmojis; i++) {
+                // Stop if we hit the limit
+                if (game4ExplodingEmojis.length >= MAX_EXPLODING_EMOJIS) {
+                    break;
+                }
                 const angle = angleStep * i;
                 const emoji = getRandomSafeEmoji();
                 game4ExplodingEmojis.push(new ExplodingEmoji(x, y, angle, emoji));
@@ -2029,9 +2041,20 @@
             }
         });
 
-        // Continuous touch movement (optional - creates explosions as you drag)
+        // Throttled touch movement to reduce particle spam
+        let game4LastTouchMove = 0;
+        const TOUCH_MOVE_THROTTLE = 100; // Only create explosions every 100ms while dragging
+
         game4Canvas.addEventListener('touchmove', (e) => {
             e.preventDefault();
+            const now = performance.now();
+
+            // Throttle to reduce performance impact
+            if (now - game4LastTouchMove < TOUCH_MOVE_THROTTLE) {
+                return;
+            }
+            game4LastTouchMove = now;
+
             const rect = game4Canvas.getBoundingClientRect();
 
             for (let i = 0; i < e.touches.length; i++) {

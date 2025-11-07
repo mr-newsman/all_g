@@ -1730,32 +1730,24 @@
                 this.y = y;
                 this.angle = angle;
                 this.char = emoji;
-                this.speed = 2 + Math.random() * 3;
-                this.size = 25 + Math.random() * 15; // Smaller emojis (was 30-50, now 25-40)
+                this.speed = 3 + Math.random() * 4; // Faster speed (was 2-5, now 3-7)
+                this.size = 25 + Math.random() * 15;
                 this.rotation = 0;
                 this.rotationSpeed = (Math.random() - 0.5) * 0.05;
                 this.vx = Math.cos(angle) * this.speed;
                 this.vy = Math.sin(angle) * this.speed;
-                this.opacity = 1;
-                this.life = 1;
-                this.fadeSpeed = 0.012 + Math.random() * 0.006; // Fade faster (was 0.008-0.012, now 0.012-0.018)
             }
 
             update() {
                 this.x += this.vx;
                 this.y += this.vy;
                 this.rotation += this.rotationSpeed;
-                this.life -= this.fadeSpeed;
-                this.opacity = this.life;
             }
 
             draw() {
-                if (this.life <= 0) return;
-
                 game4Ctx.save();
                 game4Ctx.translate(this.x, this.y);
                 game4Ctx.rotate(this.rotation);
-                game4Ctx.globalAlpha = this.opacity;
                 game4Ctx.font = `${this.size}px sans-serif`;
                 game4Ctx.textAlign = 'center';
                 game4Ctx.textBaseline = 'middle';
@@ -1764,7 +1756,12 @@
             }
 
             isDead() {
-                return this.life <= 0;
+                // Check if off-screen (with a small margin)
+                const margin = 100;
+                return this.x < -margin ||
+                       this.x > game4Width + margin ||
+                       this.y < -margin ||
+                       this.y > game4Height + margin;
             }
         }
 
